@@ -4,53 +4,93 @@
   <meta charset="utf-8" />
   <title>Medak Officers’ Performance Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Plotly and SheetJS CDN -->
   <script src="https://cdn.plot.ly/plotly-2.35.3.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
-    body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 0; background: #f7f8fa; color: #111; }
-    header { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: #fff; padding: 16px 20px; }
-    header h1 { margin: 0; font-size: 22px; font-weight: 700; }
-    header p { margin: 6px 0 0; font-size: 13px; opacity: 0.88;}
-    .container { padding: 18px; max-width: 1400px; margin: 0 auto; }
-    .filters { display: grid; gap: 12px; grid-template-columns: repeat(6, minmax(160px, 1fr)); background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; position: sticky; top: 0; z-index: 2; }
-    .filters label { font-size: 13px; color: #374151; margin-bottom: 3.5px; display: block; }
-    .filters input, .filters select, .filters button { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; }
-    .filters button { background: #2563eb; color: #fff; border: none; cursor: pointer; }
-    .filters button.secondary { background: #6b7280; }
-    .kpis { display: grid; gap: 12px; grid-template-columns: repeat(5, 1fr); margin-top: 18px; }
-    .kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
-    .kpi .label { font-size: 12px; color: #6b7280; }
-    .kpi .value { font-size: 22px; font-weight: 700; margin-top: 7px; }
-    .grid { display: grid; gap: 13px; grid-template-columns: 1fr 1fr; margin-top: 13px; }
-    .full { grid-column: 1 / -1; }
-    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; }
-    .card h3 { margin: 0 0 9px; font-size: 15px; }
-    .footer { color: #6b7280; font-size: 12px; text-align: center; padding: 16px; }
-    @media (max-width: 1000px) {
-      .filters { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      .kpis { grid-template-columns: repeat(2, 1fr); }
-      .grid { grid-template-columns: 1fr; }
-    }
+  body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 0; background: #f7f8fa; color: #111; }
+  header { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: #fff; padding: 16px 20px; }
+  .container { padding: 18px; max-width: 1400px; margin: 0 auto; }
+  .filters { display: grid; gap: 13px; grid-template-columns: repeat(7, minmax(160px, 1fr)); background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; position: sticky; top: 0; z-index: 2;}
+  .filters label { font-size: 13px; color: #374151; margin-bottom: 3.5px; display: block; }
+  .filters input, .filters select { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px;}
+  .buttons { display: flex; gap: 7px; align-items: flex-end; }
+  button { padding: 8px 16px; border-radius: 8px; border: none; font-size: 14px; cursor: pointer; background: #2563eb; color: #fff;}
+  button.secondary { background: #6b7280; }
+  .export-dropdown { padding: 8px 12px; border-radius: 8px; font-size: 13px; border: 1px solid #d1d5db;}
+  .kpis { display: grid; gap: 12px; grid-template-columns: repeat(5, 1fr); margin-top: 16px; }
+  .kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px;}
+  .kpi .label { font-size: 12px; color: #6b7280; }
+  .kpi .value { font-size: 22px; font-weight: 700; margin-top: 7px; }
+  .grid { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; margin-top: 18px;}
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px;}
+  .card h3 { margin: 0 0 13px; font-size: 16px; }
+  .footer { color: #6b7280; font-size: 12px; text-align: center; padding: 17px;}
+  .recent-tours { margin-top: 32px;}
+  .recent-tours-header { font-weight: bold; font-size: 18px; margin-bottom: 9px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 24px;}
+  th, td { border: 1px solid #e5e7eb; padding: 7px 9px; text-align: left; font-size: 13px;}
+  th { background: #f3f4f6; cursor: pointer;}
+  tr:nth-child(even) { background: #fafbfc;}
+  tr:hover { background: #e5e7eb; }
+  @media (max-width: 1000px) {
+    .filters { grid-template-columns: repeat(1, minmax(160px, 1fr)); }
+    .kpis { grid-template-columns: repeat(2, 1fr);}
+    .grid { grid-template-columns: 1fr;}
+  }
   </style>
 </head>
 <body>
   <header>
     <h1>Medak District Officers’ Performance Dashboard</h1>
-    <p>Live: Data from Google Sheets tab <b>Form Responses 1</b>. All visit and frequency charts are shown as whole-number counts (no decimals).</p>
+    <p>Interactive analytics and exports. Latest mapping, purpose and coverage metrics, and recent tours table.</p>
   </header>
-
   <div class="container">
     <div class="filters">
-      <div><label for="fromDate">From date</label><input type="date" id="fromDate" /></div>
-      <div><label for="toDate">To date</label><input type="date" id="toDate" /></div>
-      <div><label for="officer">Officer</label><select id="officer" multiple size="5"></select></div>
-      <div><label for="department">Department</label><select id="department" multiple size="5"></select></div>
-      <div><label for="mandal">Mandal</label><select id="mandal" multiple size="5"></select></div>
-      <div><label for="panchayat">Panchayat</label><select id="panchayat" multiple size="5"></select></div>
-      <div><label for="purpose">Purpose</label><select id="purpose" multiple size="5"></select></div>
-      <div><label for="followup">Follow-up Contains</label><input type="text" id="followup" placeholder="e.g., replaced, escalated" /></div>
-      <div><label for="searchText">Keyword (Observations)</label><input type="text" id="searchText" placeholder="e.g., VC, troubleshoot" /></div>
-      <div><label>&nbsp;</label><button id="applyBtn">Apply Filters</button></div>
-      <div><label>&nbsp;</label><button id="resetBtn" class="secondary">Reset</button></div>
+      <div>
+        <label for="department">Department</label>
+        <select id="department"><option value="">All</option></select>
+      </div>
+      <div>
+        <label for="officer">Officer</label>
+        <select id="officer"><option value="">All</option></select>
+      </div>
+      <div>
+        <label for="mandal">Mandal</label>
+        <select id="mandal"><option value="">All</option></select>
+      </div>
+      <div>
+        <label for="panchayat">Panchayat</label>
+        <select id="panchayat"><option value="">All</option></select>
+      </div>
+      <div>
+        <label for="purpose">Purpose</label>
+        <select id="purpose"><option value="">All</option></select>
+      </div>
+      <div>
+        <label for="attachment">Attachment</label>
+        <select id="attachment">
+          <option value="">All</option>
+          <option value="has">Has attachment</option>
+          <option value="none">No attachment</option>
+        </select>
+      </div>
+      <div>
+        <label for="fromDate">From Date</label><input type="date" id="fromDate" />
+      </div>
+      <div>
+        <label for="toDate">To Date</label><input type="date" id="toDate" />
+      </div>
+      <div class="buttons">
+        <button id="applyBtn">Apply</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+        <select id="exportType" class="export-dropdown">
+          <option value="">Export</option>
+          <option value="xlsx">Export XLSX</option>
+          <option value="csv">Export CSV</option>
+          <option value="json">Export JSON</option>
+        </select>
+      </div>
     </div>
 
     <div class="kpis">
@@ -60,43 +100,26 @@
       <div class="kpi"><div class="label">Distinct Panchayats</div><div class="value" id="kpiPanch">-</div></div>
       <div class="kpi"><div class="label">Distinct Mandals</div><div class="value" id="kpiMandal">-</div></div>
     </div>
-
     <div class="grid">
-      <div class="card" id="mapCard" style="height:520px;">
-        <h3>Medak Live Map: Visits by Mandal/Panchayat</h3>
-        <div id="map" style="width:100%;height:460px;"></div>
+      <div class="card" style="height:520px;">
+        <h3>Mandal Coverage (No. of Tours)</h3>
+        <div id="mandalCoverage" style="width:100%;height:460px;"></div>
       </div>
       <div class="card" style="height:520px;">
-        <h3>Officer Performance (Visits)</h3>
-        <div id="officerBar" style="width:100%;height:460px;"></div>
-      </div>
-      <div class="card">
-        <h3>Departments by Visits</h3>
-        <div id="deptBar" style="width:100%;height:360px;"></div>
-      </div>
-      <div class="card">
         <h3>Purpose of Visits</h3>
-        <div id="purposePie" style="width:100%;height:360px;"></div>
+        <div id="purposePie" style="width:100%;height:460px;"></div>
       </div>
-      <div class="card">
-        <h3>Visit Duration by Officer</h3>
-        <div id="durationBox" style="width:100%;height:360px;"></div>
-      </div>
-      <div class="card">
-        <h3>Frequent Issues (from Observations)</h3>
-        <div id="issuesBar" style="width:100%;height:360px;"></div>
-      </div>
-      <div class="card full">
-        <h3>Trends Over Time: Visits & Follow-ups</h3>
-        <div id="trendLine" style="width:100%;height:420px;"></div>
-      </div>
+    </div>
+    <div class="recent-tours">
+      <div class="recent-tours-header">Recent Tours (Latest 50)</div>
+      <div id="recentTours"></div>
     </div>
     <div class="footer">
-      GitHub Pages hosting. “Form Responses 1” tab required. Metrics are always integer counts. Last refreshed <span id="lastRefreshed">-</span>.
+      GitHub Pages hosting. Last refreshed <span id="lastRefreshed">-</span>.
     </div>
   </div>
-
   <script>
+    // --- Sheet API CONFIG ---
     const SHEET_ID = "1JTtApnz0YUBocOEsVaPeNgtegO8A2fJoJqRDh38UHgo";
     const API_KEY = "AIzaSyANuZBwPyDawHhfzA2uXvWZH2k6b38mzXM";
     const TAB_NAME = "Form Responses 1";
@@ -122,13 +145,9 @@
     }
     function minutesBetween(a, b) { return !a || !b ? null : Math.round((b-a)/60000); }
     function pick(obj, keysArr) { for (const k of keysArr) { if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k]; } return ""; }
-    function toSet(values) { return Array.from(new Set(values.filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b))); }
-    function tokenizeIssues(text) {
-      if (!text) return [];
-      const STOPWORDS = new Set(["with","from","that","this","have","need","needs","will","should","there","were","been","into","over","under","they","them","then","than","also","such","very","much","many","about","after","before","where","which","when","what","your","their","ours","ourselves","hers","himself","herself","itself","within","issue","issues","visit","visited","troubleshoot","action","actions","required","informed","state","team"]);
-      return String(text).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length >= 4 && !STOPWORDS.has(w));
-    }
+    function toSet(arr) { return Array.from(new Set(arr.filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b))); }
     let rows = [], filtered = [];
+    // --- GET AND NORMALIZE DATA ---
     async function fetchSheet() {
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANGE)}?key=${API_KEY}`;
       try {
@@ -139,7 +158,8 @@
         if (values.length < 2) return [];
         const headers = values[0].map(h => (h || "").trim());
         return values.slice(1).map(r => {
-          const obj = {}; headers.forEach((h, i) => obj[h] = (r[i] ?? "").trim()); return obj;
+          const obj = {}; headers.forEach((h, i) => obj[h] = (r[i] ?? "").trim());
+          return obj;
         });
       } catch (err) {
         alert("Google Sheets fetch failed. Check sharing, tab name, API key. Details: " + err);
@@ -176,54 +196,93 @@
         return rec;
       });
     }
+    // --- FILTERS ---
     function populateFilters(list) {
-      function fillSelect(el, arr) { el.innerHTML = ""; toSet(arr).forEach(v => { const opt = document.createElement("option"); opt.value = v; opt.textContent = v; el.appendChild(opt); }); }
-      fillSelect(document.getElementById("officer"), list.map(x => x.officer));
+      function fillSelect(el, arr) {
+        let selected = el.value;
+        el.innerHTML = '<option value="">All</option>';
+        toSet(arr).forEach(v => { const opt = document.createElement("option"); opt.value = v; opt.textContent = v; el.appendChild(opt); });
+        if (selected) el.value = selected;
+      }
       fillSelect(document.getElementById("department"), list.map(x => x.department));
+      fillSelect(document.getElementById("officer"), list.map(x => x.officer));
       fillSelect(document.getElementById("mandal"), list.map(x => x.mandal));
       fillSelect(document.getElementById("panchayat"), list.map(x => x.panchayat));
       fillSelect(document.getElementById("purpose"), list.map(x => x.purpose));
+      // Fill date fields
       const starts = list.map(x => x.start).filter(Boolean).sort((a,b)=>a-b);
       if (starts.length) { document.getElementById("fromDate").valueAsDate = starts[0]; document.getElementById("toDate").valueAsDate = starts[starts.length-1]; }
     }
-    function getMultiSelectValues(el) { return Array.from(el.selectedOptions).map(o => o.value); }
     function applyFilters() {
-      const fromD = document.getElementById("fromDate").value ? new Date(document.getElementById("fromDate").value) : null;
-      const toD = document.getElementById("toDate").value ? new Date(document.getElementById("toDate").value) : null;
-      if (toD) toD.setHours(23,59,59,999);
-      const selOfficer = getMultiSelectValues(document.getElementById("officer"));
-      const selDept = getMultiSelectValues(document.getElementById("department"));
-      const selMandal = getMultiSelectValues(document.getElementById("mandal"));
-      const selPanch = getMultiSelectValues(document.getElementById("panchayat"));
-      const selPurpose = getMultiSelectValues(document.getElementById("purpose"));
-      const followupText = document.getElementById("followup").value.trim().toLowerCase();
-      const searchText = document.getElementById("searchText").value.trim().toLowerCase();
+      const department = document.getElementById("department").value;
+      const officer = document.getElementById("officer").value;
+      const mandal = document.getElementById("mandal").value;
+      const panchayat = document.getElementById("panchayat").value;
+      const purpose = document.getElementById("purpose").value;
+      const attachment = document.getElementById("attachment").value;
+      const fromDate = document.getElementById("fromDate").value ? new Date(document.getElementById("fromDate").value) : null;
+      const toDate = document.getElementById("toDate").value ? new Date(document.getElementById("toDate").value) : null;
+      if (toDate) toDate.setHours(23,59,59,999);
       filtered = rows.filter(r => {
-        if (fromD && r.start && r.start < fromD) return false;
-        if (toD && r.start && r.start > toD) return false;
-        if (selOfficer.length && !selOfficer.includes(r.officer)) return false;
-        if (selDept.length && !selDept.includes(r.department)) return false;
-        if (selMandal.length && !selMandal.includes(r.mandal)) return false;
-        if (selPanch.length && !selPanch.includes(r.panchayat)) return false;
-        if (selPurpose.length && !selPurpose.includes(r.purpose)) return false;
-        if (followupText && !String(r.followup||"").toLowerCase().includes(followupText)) return false;
-        if (searchText && !String(r.observations||"").toLowerCase().includes(searchText)) return false;
+        if (department && r.department !== department) return false;
+        if (officer && r.officer !== officer) return false;
+        if (mandal && r.mandal !== mandal) return false;
+        if (panchayat && r.panchayat !== panchayat) return false;
+        if (purpose && r.purpose !== purpose) return false;
+        if (attachment === "has" && !r.hasAttachment) return false;
+        if (attachment === "none" && r.hasAttachment) return false;
+        if (fromDate && r.start && r.start < fromDate) return false;
+        if (toDate && r.start && r.start > toDate) return false;
         return true;
       });
       renderAll();
     }
     function resetFilters() {
+      ["department","officer","mandal","panchayat","purpose","attachment"].forEach(id => document.getElementById(id).value = "");
       document.getElementById("fromDate").value = "";
       document.getElementById("toDate").value = "";
-      ["officer","department","mandal","panchayat","purpose"].forEach(id => {
-        const el = document.getElementById(id);
-        Array.from(el.options).forEach(o => o.selected = false);
-      });
-      document.getElementById("followup").value = "";
-      document.getElementById("searchText").value = "";
       filtered = rows.slice();
       renderAll();
     }
+    // --- EXPORT ---
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("exportType").addEventListener("change", function() {
+        const val = this.value;
+        if (!val) return;
+        const data = filtered.map(x => ({
+          "Timestamp": x.timestamp,
+          "Officer": x.officer,
+          "Department": x.department,
+          "Designation": x.designation,
+          "Contact Number": x.contact,
+          "Start": x.startRaw,
+          "End": x.endRaw,
+          "Mandal": x.mandal,
+          "Panchayat": x.panchayat,
+          "Purpose": x.purpose,
+          "Observations/Outcomes": x.observations,
+          "Follow-up": x.followup,
+          "Attachment": x.attachments
+        }));
+        if (val === "xlsx") {
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.json_to_sheet(data);
+          XLSX.utils.book_append_sheet(wb, ws, "Tours");
+          XLSX.writeFile(wb, "medak_tours.xlsx");
+        } else if (val === "csv") {
+          const ws = XLSX.utils.json_to_sheet(data);
+          XLSX.writeFile({SheetNames:["Tours"],Sheets:{Tours:ws}}, "medak_tours.csv", {bookType:"csv"});
+        } else if (val === "json") {
+          const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "medak_tours.json";
+          a.click();
+        }
+        this.value = "";
+      });
+    });
+    // --- KPIS & CHARTS ---
     function fmtMins(min) { if (min == null || isNaN(min)) return "-"; const h = Math.floor(min/60), m = min%60; return h>0 ?`${h}h ${m}m`:`${m}m`; }
     function updateKPIs(list) {
       const total = list.length;
@@ -244,78 +303,63 @@
       for (const r of list) { const k = (r[key] || "Unknown"); map.set(k, (map.get(k)||0)+1); }
       return Array.from(map, ([k,v]) => ({k,v})).sort((a,b)=>b.v-a.v);
     }
-    function renderOfficerBar(list) {
-      const data = groupCount(list, "officer").slice(0, 20);
-      Plotly.newPlot("officerBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>Math.round(d.v)),marker:{color:"#1f77b4"}}],
-        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Officer"},yaxis:{title:"Visits", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false},{responsive:true});
-    }
-    function renderDeptBar(list) {
-      const data = groupCount(list, "department");
-      Plotly.newPlot("deptBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>Math.round(d.v)),marker:{color:"#10b981"}}],
-        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Department"},yaxis:{title:"Visits", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false}, {responsive:true});
+    function renderMandalCoverage(list) {
+      const data = groupCount(list, "mandal").slice(0, 30);
+      Plotly.newPlot("mandalCoverage", [{
+        type:"bar",
+        x: data.map(d=>d.v),
+        y: data.map(d=>d.k),
+        orientation: "h",
+        marker: { color: "#10b981" }
+      }], {
+        margin:{l:90,r:20,t:10,b:40},
+        xaxis:{title:"No. of Tours", tickmode:"linear", dtick:1, tickformat:',d'},
+        yaxis:{title:"Mandal", automargin:true},
+        displayModeBar:false
+      }, {responsive:true});
     }
     function renderPurposePie(list) {
       const data = groupCount(list, "purpose");
-      Plotly.newPlot("purposePie", [{type:"pie",labels:data.map(d=>d.k),values:data.map(d=>Math.round(d.v)), textinfo:"label+percent", hole:0.45}],
-        {margin:{l:10,r:10,t:10,b:10},showlegend:true,displayModeBar:false},{responsive:true});
+      Plotly.newPlot("purposePie", [{
+        type:"pie",
+        labels: data.map(d=>d.k),
+        values: data.map(d=>d.v),
+        textinfo:"label+percent",
+        hole:0.45,
+        marker: { colors:["#ffbe0b","#fb5607","#8338ec","#3a86ff","#ff006e","#00f5d4","#43aa8b","#870603","#e9ff70","#33415c","#dc6bad","#f6d743","#4f772d"] }
+      }], {
+        margin:{l:10,r:10,t:10,b:10},
+        showlegend:true,
+        displayModeBar:false
+      }, {responsive:true});
     }
-    function renderDurationBox(list) {
-      const byOfficer = new Map();
-      for (const r of list) { if (r.durationMin!=null) { const k=r.officer||"Unknown"; if (!byOfficer.has(k)) byOfficer.set(k,[]); byOfficer.get(k).push(Math.round(r.durationMin)); } }
-      const xs = [], ys = []; for (const [k, arr] of byOfficer) { xs.push(k); ys.push(arr); }
-      const xExpanded = ys.map((arr,i)=>Array(arr.length).fill(xs[i])).flat(), yExpanded = ys.flat();
-      Plotly.newPlot("durationBox", [{type:"box",x:xExpanded,y:yExpanded,marker:{color:"#f59e0b"}}],
-        {margin:{l:50,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Officer"},yaxis:{title:"Duration (minutes)", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false},{responsive:true});
-    }
-    function renderIssuesBar(list) {
-      const freq = new Map();
-      for (const r of list) tokenizeIssues(r.observations).forEach(w=>freq.set(w,(freq.get(w)||0)+1));
-      const data = Array.from(freq, ([k,v])=>({k, v: Math.round(v)})).sort((a,b)=>b.v-a.v).slice(0, 20);
-      Plotly.newPlot("issuesBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>d.v),marker:{color:"#ef4444"}}],
-        {margin:{l:40,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Frequent terms in observations"},yaxis:{title:"Frequency", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false}, {responsive:true});
-    }
-    function renderTrendLine(list) {
-      const byDay = new Map();
-      for (const r of list) {
-        if (!r.start) continue;
-        const d = new Date(r.start.getFullYear(), r.start.getMonth(), r.start.getDate());
-        const key = d.toISOString().slice(0,10);
-        if (!byDay.has(key)) byDay.set(key, {visits:0, follow:0});
-        const obj = byDay.get(key);
-        obj.visits += 1;
-        if (r.followup && r.followup.trim().length > 0) obj.follow += 1;
-      }
-      const days = Array.from(byDay.keys()).sort(), visits = days.map(k=>byDay.get(k).visits), follows = days.map(k=>byDay.get(k).follow);
-      Plotly.newPlot("trendLine",[
-        {type:"scatter",mode:"lines+markers",x:days,y:visits.map(y=>Math.round(y)),name:"Visits",line:{color:"#2563eb"}},
-        {type:"scatter",mode:"lines+markers",x:days,y:follows.map(y=>Math.round(y)),name:"Follow-ups",line:{color:"#16a34a"}}
-      ],{margin:{l:50,r:10,t:10,b:50},xaxis:{title:"Date"},yaxis:{title:"Count", tickmode:"linear", dtick:1, tickformat:',d'},legend:{orientation:"h"},displayModeBar:false},{responsive:true});
-    }
-    function renderMap(list) {
-      const points = list.filter(r=>r.lat!=null&&r.lon!=null);
-      const unknown = list.filter(r=>r.lat==null || r.lon==null);
-      const hover = points.map(r=>`Officer: ${r.officer||"-"}<br>Dept: ${r.department||"-"}<br>Mandal: ${r.mandal||"-"}<br>Panchayat: ${r.panchayat||"-"}<br>Purpose: ${r.purpose||"-"}<br>Start: ${r.start?r.start.toLocaleString():"-"}`);
-      const traces = [];
-      if (points.length) traces.push({type:"scattermapbox",lat:points.map(r=>r.lat),lon:points.map(r=>r.lon),mode:"markers",text:hover,hoverinfo:"text",marker:{size:10,color:"#e11d48",opacity:0.8}});
-      const annotations = [];
-      if (unknown.length) annotations.push({text:`Note: ${unknown.length} records lack Lat/Lon`,showarrow:false,xref:"paper",yref:"paper",x:0,y:1.12,font:{size:11,color:"#6b7280"}});
-      Plotly.newPlot("map",traces,{margin:{l:0,r:0,t:20,b:0},mapbox:{style:"open-street-map",center:points.length?{lat:points[0].lat,lon:points.lon}:{lat:18.036,lon:78.265}, zoom:8},annotations},{responsive:true});
+    // --- RECENT TOURS TABLE ---
+    function renderRecentToursTable(list) {
+      const container = document.getElementById("recentTours");
+      if (!list.length) { container.innerHTML = "<i>No tours found.</i>"; return; }
+      const cols = [
+        { k:"timestamp", label:"Date" },{k:"officer",label:"Officer"},{k:"department",label:"Dept"},
+        {k:"designation",label:"Desig."},{k:"mandal",label:"Mandal"},{k:"panchayat",label:"Panchayat"},
+        {k:"purpose",label:"Purpose"},{k:"observations",label:"Key Observations"},{k:"followup",label:"Follow-up"}
+      ];
+      const header = `<tr>${cols.map(c=>`<th>${c.label}</th>`).join("")}</tr>`;
+      const rowsHtml = list.slice(0,50).map(r=>
+        `<tr>${cols.map(c=>`<td>${r[c.k]?r[c.k]:""}</td>`).join("")}</tr>`
+      ).join("");
+      container.innerHTML = `<table>${header}${rowsHtml}</table>`;
     }
     function renderAll() {
       updateKPIs(filtered);
-      renderMap(filtered);
-      renderOfficerBar(filtered);
-      renderDeptBar(filtered);
+      renderMandalCoverage(filtered);
       renderPurposePie(filtered);
-      renderDurationBox(filtered);
-      renderIssuesBar(filtered);
-      renderTrendLine(filtered);
+      renderRecentToursTable(filtered.sort((a,b)=>b.start-b.start));
     }
     function attachEvents() {
       document.getElementById("applyBtn").addEventListener("click", applyFilters);
       document.getElementById("resetBtn").addEventListener("click", resetFilters);
       window.addEventListener("resize", ()=>renderAll());
     }
+    // --- INIT ---
     async function init() {
       rows = normalize(await fetchSheet());
       filtered = rows.slice();

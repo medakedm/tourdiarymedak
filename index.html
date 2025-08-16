@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <title>Medak Officers’ Performance Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Plotly.js v2 CDN -->
   <script src="https://cdn.plot.ly/plotly-2.35.3.min.js"></script>
   <style>
     body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 0; background: #f7f8fa; color: #111; }
@@ -36,59 +35,24 @@
 <body>
   <header>
     <h1>Medak District Officers’ Performance Dashboard</h1>
-    <p>Live: All data via Google Sheets tab <b>Form Responses 1</b>. If map doesn’t show, add Latitude/Longitude columns!</p>
+    <p>Live: Data from Google Sheets tab <b>Form Responses 1</b>. All visit and frequency charts are shown as whole-number counts (no decimals).</p>
   </header>
 
   <div class="container">
-    <!-- Filters -->
     <div class="filters">
-      <div>
-        <label for="fromDate">From date</label>
-        <input type="date" id="fromDate" />
-      </div>
-      <div>
-        <label for="toDate">To date</label>
-        <input type="date" id="toDate" />
-      </div>
-      <div>
-        <label for="officer">Officer</label>
-        <select id="officer" multiple size="5"></select>
-      </div>
-      <div>
-        <label for="department">Department</label>
-        <select id="department" multiple size="5"></select>
-      </div>
-      <div>
-        <label for="mandal">Mandal</label>
-        <select id="mandal" multiple size="5"></select>
-      </div>
-      <div>
-        <label for="panchayat">Panchayat</label>
-        <select id="panchayat" multiple size="5"></select>
-      </div>
-      <div>
-        <label for="purpose">Purpose</label>
-        <select id="purpose" multiple size="5"></select>
-      </div>
-      <div>
-        <label for="followup">Follow-up Contains</label>
-        <input type="text" id="followup" placeholder="e.g., replaced, escalated" />
-      </div>
-      <div>
-        <label for="searchText">Keyword (Observations)</label>
-        <input type="text" id="searchText" placeholder="e.g., VC, troubleshoot" />
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button id="applyBtn">Apply Filters</button>
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button id="resetBtn" class="secondary">Reset</button>
-      </div>
+      <div><label for="fromDate">From date</label><input type="date" id="fromDate" /></div>
+      <div><label for="toDate">To date</label><input type="date" id="toDate" /></div>
+      <div><label for="officer">Officer</label><select id="officer" multiple size="5"></select></div>
+      <div><label for="department">Department</label><select id="department" multiple size="5"></select></div>
+      <div><label for="mandal">Mandal</label><select id="mandal" multiple size="5"></select></div>
+      <div><label for="panchayat">Panchayat</label><select id="panchayat" multiple size="5"></select></div>
+      <div><label for="purpose">Purpose</label><select id="purpose" multiple size="5"></select></div>
+      <div><label for="followup">Follow-up Contains</label><input type="text" id="followup" placeholder="e.g., replaced, escalated" /></div>
+      <div><label for="searchText">Keyword (Observations)</label><input type="text" id="searchText" placeholder="e.g., VC, troubleshoot" /></div>
+      <div><label>&nbsp;</label><button id="applyBtn">Apply Filters</button></div>
+      <div><label>&nbsp;</label><button id="resetBtn" class="secondary">Reset</button></div>
     </div>
 
-    <!-- KPIs -->
     <div class="kpis">
       <div class="kpi"><div class="label">Total Tours</div><div class="value" id="kpiTotal">-</div></div>
       <div class="kpi"><div class="label">Avg Duration</div><div class="value" id="kpiAvgDur">-</div></div>
@@ -97,57 +61,46 @@
       <div class="kpi"><div class="label">Distinct Mandals</div><div class="value" id="kpiMandal">-</div></div>
     </div>
 
-    <!-- Charts -->
     <div class="grid">
       <div class="card" id="mapCard" style="height:520px;">
         <h3>Medak Live Map: Visits by Mandal/Panchayat</h3>
         <div id="map" style="width:100%;height:460px;"></div>
       </div>
-
       <div class="card" style="height:520px;">
         <h3>Officer Performance (Visits)</h3>
         <div id="officerBar" style="width:100%;height:460px;"></div>
       </div>
-
       <div class="card">
         <h3>Departments by Visits</h3>
         <div id="deptBar" style="width:100%;height:360px;"></div>
       </div>
-
       <div class="card">
         <h3>Purpose of Visits</h3>
         <div id="purposePie" style="width:100%;height:360px;"></div>
       </div>
-
       <div class="card">
         <h3>Visit Duration by Officer</h3>
         <div id="durationBox" style="width:100%;height:360px;"></div>
       </div>
-
       <div class="card">
         <h3>Frequent Issues (from Observations)</h3>
         <div id="issuesBar" style="width:100%;height:360px;"></div>
       </div>
-
       <div class="card full">
         <h3>Trends Over Time: Visits & Follow-ups</h3>
         <div id="trendLine" style="width:100%;height:420px;"></div>
       </div>
     </div>
-
     <div class="footer">
-      GitHub static hosting, Google Sheets API. Works with “Form Responses 1” tab. Last refreshed <span id="lastRefreshed">-</span>.
+      GitHub Pages hosting. “Form Responses 1” tab required. Metrics are always integer counts. Last refreshed <span id="lastRefreshed">-</span>.
     </div>
   </div>
 
   <script>
-    // Google Sheets config
     const SHEET_ID = "1JTtApnz0YUBocOEsVaPeNgtegO8A2fJoJqRDh38UHgo";
     const API_KEY = "AIzaSyANuZBwPyDawHhfzA2uXvWZH2k6b38mzXM";
     const TAB_NAME = "Form Responses 1";
     const RANGE = `${TAB_NAME}!A1:AZ100000`;
-
-    // Columns mapping
     const FIELDS = {
       timestamp: ["Timestamp"], email: ["Email Address","Email"], officer: ["Name of the Officer","Officer Name","Officer"],
       department: ["Department"], designation: ["Designation"], contact: ["Contact Number","Phone","Mobile"],
@@ -156,7 +109,6 @@
       observations: ["Key observations/Outcomes","Observations","Outcomes","Findings"], followup: ["Follow-up Actions Required","Follow up","Follow-up"],
       hierarchy: ["Level of hierarchy","Hierarchy"], attachments: ["Attachments","Attachment","Photo URL"], lat: ["Latitude","Lat"], lon: ["Longitude","Lon","Lng"]
     };
-
     function parseDateFlexible(s) {
       if (!s) return null;
       const tryDate = new Date(s);
@@ -171,15 +123,12 @@
     function minutesBetween(a, b) { return !a || !b ? null : Math.round((b-a)/60000); }
     function pick(obj, keysArr) { for (const k of keysArr) { if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k]; } return ""; }
     function toSet(values) { return Array.from(new Set(values.filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b))); }
-    // Tokenizer for issues
     function tokenizeIssues(text) {
       if (!text) return [];
       const STOPWORDS = new Set(["with","from","that","this","have","need","needs","will","should","there","were","been","into","over","under","they","them","then","than","also","such","very","much","many","about","after","before","where","which","when","what","your","their","ours","ourselves","hers","himself","herself","itself","within","issue","issues","visit","visited","troubleshoot","action","actions","required","informed","state","team"]);
       return String(text).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length >= 4 && !STOPWORDS.has(w));
     }
-    // State
     let rows = [], filtered = [];
-    // Fetch function
     async function fetchSheet() {
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANGE)}?key=${API_KEY}`;
       try {
@@ -197,7 +146,6 @@
         return [];
       }
     }
-
     function normalize(records) {
       return records.map(r => {
         const rec = {
@@ -228,29 +176,16 @@
         return rec;
       });
     }
-
     function populateFilters(list) {
-      const officerSel = document.getElementById("officer");
-      const deptSel = document.getElementById("department");
-      const mandalSel = document.getElementById("mandal");
-      const panchSel = document.getElementById("panchayat");
-      const purposeSel = document.getElementById("purpose");
-      function fillSelect(el, arr) {
-        el.innerHTML = "";
-        toSet(arr).forEach(v => { const opt = document.createElement("option"); opt.value = v; opt.textContent = v; el.appendChild(opt); });
-      }
-      fillSelect(officerSel, list.map(x => x.officer));
-      fillSelect(deptSel, list.map(x => x.department));
-      fillSelect(mandalSel, list.map(x => x.mandal));
-      fillSelect(panchSel, list.map(x => x.panchayat));
-      fillSelect(purposeSel, list.map(x => x.purpose));
-      // Set default date range
+      function fillSelect(el, arr) { el.innerHTML = ""; toSet(arr).forEach(v => { const opt = document.createElement("option"); opt.value = v; opt.textContent = v; el.appendChild(opt); }); }
+      fillSelect(document.getElementById("officer"), list.map(x => x.officer));
+      fillSelect(document.getElementById("department"), list.map(x => x.department));
+      fillSelect(document.getElementById("mandal"), list.map(x => x.mandal));
+      fillSelect(document.getElementById("panchayat"), list.map(x => x.panchayat));
+      fillSelect(document.getElementById("purpose"), list.map(x => x.purpose));
       const starts = list.map(x => x.start).filter(Boolean).sort((a,b)=>a-b);
-      const minD = starts[0], maxD = starts[starts.length-1];
-      if (minD) document.getElementById("fromDate").valueAsDate = minD;
-      if (maxD) document.getElementById("toDate").valueAsDate = maxD;
+      if (starts.length) { document.getElementById("fromDate").valueAsDate = starts[0]; document.getElementById("toDate").valueAsDate = starts[starts.length-1]; }
     }
-
     function getMultiSelectValues(el) { return Array.from(el.selectedOptions).map(o => o.value); }
     function applyFilters() {
       const fromD = document.getElementById("fromDate").value ? new Date(document.getElementById("fromDate").value) : null;
@@ -277,7 +212,6 @@
       });
       renderAll();
     }
-
     function resetFilters() {
       document.getElementById("fromDate").value = "";
       document.getElementById("toDate").value = "";
@@ -290,7 +224,6 @@
       filtered = rows.slice();
       renderAll();
     }
-
     function fmtMins(min) { if (min == null || isNaN(min)) return "-"; const h = Math.floor(min/60), m = min%60; return h>0 ?`${h}h ${m}m`:`${m}m`; }
     function updateKPIs(list) {
       const total = list.length;
@@ -306,8 +239,6 @@
       document.getElementById("kpiMandal").textContent = mandal.toLocaleString();
       document.getElementById("lastRefreshed").textContent = new Date().toLocaleString();
     }
-
-    // Chart helpers
     function groupCount(list, key) {
       const map = new Map();
       for (const r of list) { const k = (r[key] || "Unknown"); map.set(k, (map.get(k)||0)+1); }
@@ -315,33 +246,33 @@
     }
     function renderOfficerBar(list) {
       const data = groupCount(list, "officer").slice(0, 20);
-      Plotly.newPlot("officerBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>d.v),marker:{color:"#1f77b4"}}],
-        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Officer"},yaxis:{title:"Visits"},displayModeBar:false},{responsive:true});
+      Plotly.newPlot("officerBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>Math.round(d.v)),marker:{color:"#1f77b4"}}],
+        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Officer"},yaxis:{title:"Visits", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false},{responsive:true});
     }
     function renderDeptBar(list) {
       const data = groupCount(list, "department");
-      Plotly.newPlot("deptBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>d.v),marker:{color:"#10b981"}}],
-        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Department"},yaxis:{title:"Visits"},displayModeBar:false}, {responsive:true});
+      Plotly.newPlot("deptBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>Math.round(d.v)),marker:{color:"#10b981"}}],
+        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Department"},yaxis:{title:"Visits", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false}, {responsive:true});
     }
     function renderPurposePie(list) {
       const data = groupCount(list, "purpose");
-      Plotly.newPlot("purposePie", [{type:"pie",labels:data.map(d=>d.k),values:data.map(d=>d.v), textinfo:"label+percent", hole:0.45}],
+      Plotly.newPlot("purposePie", [{type:"pie",labels:data.map(d=>d.k),values:data.map(d=>Math.round(d.v)), textinfo:"label+percent", hole:0.45}],
         {margin:{l:10,r:10,t:10,b:10},showlegend:true,displayModeBar:false},{responsive:true});
     }
     function renderDurationBox(list) {
       const byOfficer = new Map();
-      for (const r of list) { if (r.durationMin!=null) { const k=r.officer||"Unknown"; if (!byOfficer.has(k)) byOfficer.set(k,[]); byOfficer.get(k).push(r.durationMin); } }
+      for (const r of list) { if (r.durationMin!=null) { const k=r.officer||"Unknown"; if (!byOfficer.has(k)) byOfficer.set(k,[]); byOfficer.get(k).push(Math.round(r.durationMin)); } }
       const xs = [], ys = []; for (const [k, arr] of byOfficer) { xs.push(k); ys.push(arr); }
       const xExpanded = ys.map((arr,i)=>Array(arr.length).fill(xs[i])).flat(), yExpanded = ys.flat();
       Plotly.newPlot("durationBox", [{type:"box",x:xExpanded,y:yExpanded,marker:{color:"#f59e0b"}}],
-        {margin:{l:50,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Officer"},yaxis:{title:"Duration (minutes)"},displayModeBar:false},{responsive:true});
+        {margin:{l:50,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Officer"},yaxis:{title:"Duration (minutes)", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false},{responsive:true});
     }
     function renderIssuesBar(list) {
       const freq = new Map();
       for (const r of list) tokenizeIssues(r.observations).forEach(w=>freq.set(w,(freq.get(w)||0)+1));
-      const data = Array.from(freq, ([k,v])=>({k,v})).sort((a,b)=>b.v-a.v).slice(0, 20);
+      const data = Array.from(freq, ([k,v])=>({k, v: Math.round(v)})).sort((a,b)=>b.v-a.v).slice(0, 20);
       Plotly.newPlot("issuesBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>d.v),marker:{color:"#ef4444"}}],
-        {margin:{l:40,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Frequent terms in observations"},yaxis:{title:"Frequency"},displayModeBar:false}, {responsive:true});
+        {margin:{l:40,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Frequent terms in observations"},yaxis:{title:"Frequency", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false}, {responsive:true});
     }
     function renderTrendLine(list) {
       const byDay = new Map();
@@ -356,9 +287,9 @@
       }
       const days = Array.from(byDay.keys()).sort(), visits = days.map(k=>byDay.get(k).visits), follows = days.map(k=>byDay.get(k).follow);
       Plotly.newPlot("trendLine",[
-        {type:"scatter",mode:"lines+markers",x:days,y:visits,name:"Visits",line:{color:"#2563eb"}},
-        {type:"scatter",mode:"lines+markers",x:days,y:follows,name:"Follow-ups",line:{color:"#16a34a"}}
-      ],{margin:{l:50,r:10,t:10,b:50},xaxis:{title:"Date"},yaxis:{title:"Count"},legend:{orientation:"h"},displayModeBar:false},{responsive:true});
+        {type:"scatter",mode:"lines+markers",x:days,y:visits.map(y=>Math.round(y)),name:"Visits",line:{color:"#2563eb"}},
+        {type:"scatter",mode:"lines+markers",x:days,y:follows.map(y=>Math.round(y)),name:"Follow-ups",line:{color:"#16a34a"}}
+      ],{margin:{l:50,r:10,t:10,b:50},xaxis:{title:"Date"},yaxis:{title:"Count", tickmode:"linear", dtick:1, tickformat:',d'},legend:{orientation:"h"},displayModeBar:false},{responsive:true});
     }
     function renderMap(list) {
       const points = list.filter(r=>r.lat!=null&&r.lon!=null);
@@ -385,7 +316,6 @@
       document.getElementById("resetBtn").addEventListener("click", resetFilters);
       window.addEventListener("resize", ()=>renderAll());
     }
-    // Initialization
     async function init() {
       rows = normalize(await fetchSheet());
       filtered = rows.slice();

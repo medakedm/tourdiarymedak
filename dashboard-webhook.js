@@ -102,6 +102,6 @@ class DashboardWebhookHandler {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Replace with your published sheet CSV URL:
-  const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXnedc4Q4j1BnytlbJut2IOV6OcctQgCurlyFPDu6YgN1QNs9RrhlxaC-3dI2BVBQhq6uQJnaH6Ds5/pubhtml?gid=1958057995&single=true';
+  const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXnedc4Q4j1BnytlbJut2IOV6OcctQgCurlyFPDu6YgN1QNs9RrhlxaC-3dI2BVBQhq6uQJnaH6Ds5/pub?gid=1958057995&single=true&output=csv';
   window.dashboardWebhook = new DashboardWebhookHandler(csvUrl);
 });

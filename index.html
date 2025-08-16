@@ -4,14 +4,13 @@
   <meta charset="utf-8" />
   <title>Medak Officers’ Performance Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Plotly and SheetJS CDN -->
   <script src="https://cdn.plot.ly/plotly-2.35.3.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
   body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 0; background: #f7f8fa; color: #111; }
   header { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: #fff; padding: 16px 20px; }
   .container { padding: 18px; max-width: 1400px; margin: 0 auto; }
-  .filters { display: grid; gap: 13px; grid-template-columns: repeat(7, minmax(160px, 1fr)); background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; position: sticky; top: 0; z-index: 2;}
+  .filters { display: grid; gap: 12px; grid-template-columns: repeat(8, minmax(160px, 1fr)); background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; position: sticky; top: 0; z-index: 2;}
   .filters label { font-size: 13px; color: #374151; margin-bottom: 3.5px; display: block; }
   .filters input, .filters select { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px;}
   .buttons { display: flex; gap: 7px; align-items: flex-end; }
@@ -27,14 +26,14 @@
   .card h3 { margin: 0 0 13px; font-size: 16px; }
   .footer { color: #6b7280; font-size: 12px; text-align: center; padding: 17px;}
   .recent-tours { margin-top: 32px;}
-  .recent-tours-header { font-weight: bold; font-size: 18px; margin-bottom: 9px; }
+  .recent-tours-header { font-weight: bold; font-size: 18px; margin-bottom: 12px;}
   table { border-collapse: collapse; width: 100%; margin-bottom: 24px;}
   th, td { border: 1px solid #e5e7eb; padding: 7px 9px; text-align: left; font-size: 13px;}
   th { background: #f3f4f6; cursor: pointer;}
   tr:nth-child(even) { background: #fafbfc;}
   tr:hover { background: #e5e7eb; }
-  @media (max-width: 1000px) {
-    .filters { grid-template-columns: repeat(1, minmax(160px, 1fr)); }
+  @media (max-width: 1100px) {
+    .filters { grid-template-columns: 1fr;}
     .kpis { grid-template-columns: repeat(2, 1fr);}
     .grid { grid-template-columns: 1fr;}
   }
@@ -43,7 +42,7 @@
 <body>
   <header>
     <h1>Medak District Officers’ Performance Dashboard</h1>
-    <p>Interactive analytics and exports. Latest mapping, purpose and coverage metrics, and recent tours table.</p>
+    <p>Live analytics, mapping, tour coverage, purpose/issue breakdown, and latest tours table. All metrics are integer counts.</p>
   </header>
   <div class="container">
     <div class="filters">
@@ -76,12 +75,22 @@
         </select>
       </div>
       <div>
-        <label for="fromDate">From Date</label><input type="date" id="fromDate" />
+        <label for="fromDate">From Date</label>
+        <input type="date" id="fromDate" />
       </div>
       <div>
-        <label for="toDate">To Date</label><input type="date" id="toDate" />
+        <label for="toDate">To Date</label>
+        <input type="date" id="toDate" />
       </div>
-      <div class="buttons">
+      <div>
+        <label for="followup">Follow-up Contains</label>
+        <input type="text" id="followup" placeholder="e.g., replaced, escalated"/>
+      </div>
+      <div>
+        <label for="searchText">Keyword (Observations)</label>
+        <input type="text" id="searchText" placeholder="e.g., troubleshoot, VC"/>
+      </div>
+      <div class="buttons" style="align-items:center;">
         <button id="applyBtn">Apply</button>
         <button id="resetBtn" class="secondary">Reset</button>
         <select id="exportType" class="export-dropdown">
@@ -92,7 +101,6 @@
         </select>
       </div>
     </div>
-
     <div class="kpis">
       <div class="kpi"><div class="label">Total Tours</div><div class="value" id="kpiTotal">-</div></div>
       <div class="kpi"><div class="label">Avg Duration</div><div class="value" id="kpiAvgDur">-</div></div>
@@ -109,13 +117,37 @@
         <h3>Purpose of Visits</h3>
         <div id="purposePie" style="width:100%;height:460px;"></div>
       </div>
+      <div class="card" style="height:530px;">
+        <h3>Medak Live Map: Visits by Mandal/Panchayat</h3>
+        <div id="map" style="width:100%;height:470px;"></div>
+      </div>
+      <div class="card" style="height:530px;">
+        <h3>Officer Performance (Visits)</h3>
+        <div id="officerBar" style="width:100%;height:470px;"></div>
+      </div>
+      <div class="card" style="height:420px;">
+        <h3>Departments by Visits</h3>
+        <div id="deptBar" style="width:100%;height:370px;"></div>
+      </div>
+      <div class="card" style="height:420px;">
+        <h3>Visit Duration by Officer</h3>
+        <div id="durationBox" style="width:100%;height:370px;"></div>
+      </div>
+      <div class="card" style="height:420px;">
+        <h3>Frequent Issues (from Observations)</h3>
+        <div id="issuesBar" style="width:100%;height:370px;"></div>
+      </div>
+      <div class="card full" style="height:420px;">
+        <h3>Trends Over Time: Visits & Follow-ups</h3>
+        <div id="trendLine" style="width:100%;height:370px;"></div>
+      </div>
     </div>
     <div class="recent-tours">
       <div class="recent-tours-header">Recent Tours (Latest 50)</div>
       <div id="recentTours"></div>
     </div>
     <div class="footer">
-      GitHub Pages hosting. Last refreshed <span id="lastRefreshed">-</span>.
+      GitHub Pages hosting. All features & filters live. Last refreshed <span id="lastRefreshed">-</span>.
     </div>
   </div>
   <script>
@@ -146,8 +178,12 @@
     function minutesBetween(a, b) { return !a || !b ? null : Math.round((b-a)/60000); }
     function pick(obj, keysArr) { for (const k of keysArr) { if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k]; } return ""; }
     function toSet(arr) { return Array.from(new Set(arr.filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b))); }
+    function tokenizeIssues(text) {
+      if (!text) return [];
+      const STOPWORDS = new Set(["with","from","that","this","have","need","needs","will","should","there","were","been","into","over","under","they","them","then","than","also","such","very","much","many","about","after","before","where","which","when","what","your","their","ours","ourselves","hers","himself","herself","itself","within","issue","issues","visit","visited","troubleshoot","action","actions","required","informed","state","team"]);
+      return String(text).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length >= 4 && !STOPWORDS.has(w));
+    }
     let rows = [], filtered = [];
-    // --- GET AND NORMALIZE DATA ---
     async function fetchSheet() {
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANGE)}?key=${API_KEY}`;
       try {
@@ -196,7 +232,6 @@
         return rec;
       });
     }
-    // --- FILTERS ---
     function populateFilters(list) {
       function fillSelect(el, arr) {
         let selected = el.value;
@@ -209,7 +244,6 @@
       fillSelect(document.getElementById("mandal"), list.map(x => x.mandal));
       fillSelect(document.getElementById("panchayat"), list.map(x => x.panchayat));
       fillSelect(document.getElementById("purpose"), list.map(x => x.purpose));
-      // Fill date fields
       const starts = list.map(x => x.start).filter(Boolean).sort((a,b)=>a-b);
       if (starts.length) { document.getElementById("fromDate").valueAsDate = starts[0]; document.getElementById("toDate").valueAsDate = starts[starts.length-1]; }
     }
@@ -222,6 +256,8 @@
       const attachment = document.getElementById("attachment").value;
       const fromDate = document.getElementById("fromDate").value ? new Date(document.getElementById("fromDate").value) : null;
       const toDate = document.getElementById("toDate").value ? new Date(document.getElementById("toDate").value) : null;
+      const followupText = document.getElementById("followup").value.trim().toLowerCase();
+      const searchText = document.getElementById("searchText").value.trim().toLowerCase();
       if (toDate) toDate.setHours(23,59,59,999);
       filtered = rows.filter(r => {
         if (department && r.department !== department) return false;
@@ -233,18 +269,19 @@
         if (attachment === "none" && r.hasAttachment) return false;
         if (fromDate && r.start && r.start < fromDate) return false;
         if (toDate && r.start && r.start > toDate) return false;
+        if (followupText && !String(r.followup||"").toLowerCase().includes(followupText)) return false;
+        if (searchText && !String(r.observations||"").toLowerCase().includes(searchText)) return false;
         return true;
       });
       renderAll();
     }
     function resetFilters() {
-      ["department","officer","mandal","panchayat","purpose","attachment"].forEach(id => document.getElementById(id).value = "");
+      ["department","officer","mandal","panchayat","purpose","attachment","followup","searchText"].forEach(id => document.getElementById(id).value = "");
       document.getElementById("fromDate").value = "";
       document.getElementById("toDate").value = "";
       filtered = rows.slice();
       renderAll();
     }
-    // --- EXPORT ---
     document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("exportType").addEventListener("change", function() {
         const val = this.value;
@@ -282,7 +319,6 @@
         this.value = "";
       });
     });
-    // --- KPIS & CHARTS ---
     function fmtMins(min) { if (min == null || isNaN(min)) return "-"; const h = Math.floor(min/60), m = min%60; return h>0 ?`${h}h ${m}m`:`${m}m`; }
     function updateKPIs(list) {
       const total = list.length;
@@ -333,7 +369,58 @@
         displayModeBar:false
       }, {responsive:true});
     }
-    // --- RECENT TOURS TABLE ---
+    function renderOfficerBar(list) {
+      const data = groupCount(list, "officer").slice(0, 20);
+      Plotly.newPlot("officerBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>Math.round(d.v)),marker:{color:"#1f77b4"}}],
+        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Officer"},yaxis:{title:"Visits", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false},{responsive:true});
+    }
+    function renderDeptBar(list) {
+      const data = groupCount(list, "department");
+      Plotly.newPlot("deptBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>Math.round(d.v)),marker:{color:"#fb5607"}}],
+        {margin:{l:40,r:10,t:10,b:80},xaxis:{automargin:true, tickangle:-30, title:"Department"},yaxis:{title:"Visits", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false}, {responsive:true});
+    }
+    function renderDurationBox(list) {
+      const byOfficer = new Map();
+      for (const r of list) { if (r.durationMin!=null) { const k=r.officer||"Unknown"; if (!byOfficer.has(k)) byOfficer.set(k,[]); byOfficer.get(k).push(Math.round(r.durationMin)); } }
+      const xs = [], ys = []; for (const [k, arr] of byOfficer) { xs.push(k); ys.push(arr); }
+      const xExpanded = ys.map((arr,i)=>Array(arr.length).fill(xs[i])).flat(), yExpanded = ys.flat();
+      Plotly.newPlot("durationBox", [{type:"box",x:xExpanded,y:yExpanded,marker:{color:"#f59e0b"}}],
+        {margin:{l:50,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Officer"},yaxis:{title:"Duration (minutes)", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false},{responsive:true});
+    }
+    function renderIssuesBar(list) {
+      const freq = new Map();
+      for (const r of list) tokenizeIssues(r.observations).forEach(w=>freq.set(w,(freq.get(w)||0)+1));
+      const data = Array.from(freq, ([k,v])=>({k, v: Math.round(v)})).sort((a,b)=>b.v-a.v).slice(0, 20);
+      Plotly.newPlot("issuesBar", [{type:"bar",x:data.map(d=>d.k),y:data.map(d=>d.v),marker:{color:"#8338ec"}}],
+        {margin:{l:40,r:10,t:10,b:100},xaxis:{automargin:true,tickangle:-30,title:"Frequent terms in observations"},yaxis:{title:"Frequency", tickmode:"linear", dtick:1, tickformat:',d'},displayModeBar:false}, {responsive:true});
+    }
+    function renderTrendLine(list) {
+      const byDay = new Map();
+      for (const r of list) {
+        if (!r.start) continue;
+        const d = new Date(r.start.getFullYear(), r.start.getMonth(), r.start.getDate());
+        const key = d.toISOString().slice(0,10);
+        if (!byDay.has(key)) byDay.set(key, {visits:0, follow:0});
+        const obj = byDay.get(key);
+        obj.visits += 1;
+        if (r.followup && r.followup.trim().length > 0) obj.follow += 1;
+      }
+      const days = Array.from(byDay.keys()).sort(), visits = days.map(k=>byDay.get(k).visits), follows = days.map(k=>byDay.get(k).follow);
+      Plotly.newPlot("trendLine",[
+        {type:"scatter",mode:"lines+markers",x:days,y:visits.map(y=>Math.round(y)),name:"Visits",line:{color:"#3a86ff"}},
+        {type:"scatter",mode:"lines+markers",x:days,y:follows.map(y=>Math.round(y)),name:"Follow-ups",line:{color:"#ff006e"}}
+      ],{margin:{l:50,r:10,t:10,b:50},xaxis:{title:"Date"},yaxis:{title:"Count", tickmode:"linear", dtick:1, tickformat:',d'},legend:{orientation:"h"},displayModeBar:false},{responsive:true});
+    }
+    function renderMap(list) {
+      const points = list.filter(r=>r.lat!=null&&r.lon!=null);
+      const unknown = list.filter(r=>r.lat==null || r.lon==null);
+      const hover = points.map(r=>`Officer: ${r.officer||"-"}<br>Dept: ${r.department||"-"}<br>Mandal: ${r.mandal||"-"}<br>Panchayat: ${r.panchayat||"-"}<br>Purpose: ${r.purpose||"-"}<br>Start: ${r.start?r.start.toLocaleString():"-"}`);
+      const traces = [];
+      if (points.length) traces.push({type:"scattermapbox",lat:points.map(r=>r.lat),lon:points.map(r=>r.lon),mode:"markers",text:hover,hoverinfo:"text",marker:{size:10,color:"#e11d48",opacity:0.8}});
+      const annotations = [];
+      if (unknown.length) annotations.push({text:`Note: ${unknown.length} records lack Lat/Lon`,showarrow:false,xref:"paper",yref:"paper",x:0,y:1.12,font:{size:11,color:"#6b7280"}});
+      Plotly.newPlot("map",traces,{margin:{l:0,r:0,t:20,b:0},mapbox:{style:"open-street-map",center:points.length?{lat:points[0].lat,lon:points.lon}:{lat:18.036,lon:78.265}, zoom:8},annotations},{responsive:true});
+    }
     function renderRecentToursTable(list) {
       const container = document.getElementById("recentTours");
       if (!list.length) { container.innerHTML = "<i>No tours found.</i>"; return; }
@@ -352,6 +439,12 @@
       updateKPIs(filtered);
       renderMandalCoverage(filtered);
       renderPurposePie(filtered);
+      renderMap(filtered);
+      renderOfficerBar(filtered);
+      renderDeptBar(filtered);
+      renderDurationBox(filtered);
+      renderIssuesBar(filtered);
+      renderTrendLine(filtered);
       renderRecentToursTable(filtered.sort((a,b)=>b.start-b.start));
     }
     function attachEvents() {
@@ -359,7 +452,6 @@
       document.getElementById("resetBtn").addEventListener("click", resetFilters);
       window.addEventListener("resize", ()=>renderAll());
     }
-    // --- INIT ---
     async function init() {
       rows = normalize(await fetchSheet());
       filtered = rows.slice();

@@ -663,5 +663,12 @@
   </script>
     <!-- Dashboard Webhook Integration -->
   <script src="dashboard-webhook.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXnedc4Q4j1BnytlbJut2IOV6OcctQgCurlyFPDu6YgN1QNs9RrhlxaC-3dI2BVBQhq6uQJnaH6Ds5/pub?gid=1958057995&single=true&output=csv';
+    window.dashboardWebhook = new DashboardWebhookHandler(csvUrl);
+  });
+</script>
+
 </body>
 </html>
